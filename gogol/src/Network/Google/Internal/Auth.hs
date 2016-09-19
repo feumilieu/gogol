@@ -258,11 +258,11 @@ accountsURL = "https://accounts.google.com/o/oauth2/v2/auth"
 
 accountsRequest :: Client.Request
 accountsRequest = Client.defaultRequest
-    { Client.host           = "accounts.google.com"
+    { Client.host           = "www.googleapis.com"
     , Client.port           = 443
     , Client.secure         = True
     , Client.method         = "POST"
-    , Client.path           = "/o/oauth2/v2/auth"
+    , Client.path           = "/oauth2/v4/token"
     , Client.requestHeaders =
         [ (hContentType, "application/x-www-form-urlencoded")
         ]
