@@ -40,7 +40,7 @@ import qualified Network.Google.Storage as Storage
 --example :: Text -> FilePath -> IO ()
 example bucket input output = do
     -- Setup a logger to emit 'Debug' (or higher) log statements to 'stdout':
-    lgr  <- Google.newLogger Google.Debug stdout
+    lgr  <- Google.newLogger Google.Debug stderr
 
     -- Create a new environment which will discover the appropriate
     -- AuthN/AuthZ credentials, and explicitly state the OAuth scopes

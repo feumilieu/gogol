@@ -304,7 +304,7 @@ The following example demonstrates uploading a file to Google
 >
 > example :: IO Object
 > example = do
->     lgr  <- newLogger Debug stdout                                               -- (1)
+>     lgr  <- newLogger Debug stderr                                               -- (1)
 >     env  <- newEnv <&> (envLogger .~ lgr) . (envScopes .~ storageReadWriteScope) -- (2) (3)
 >     body <- sourceBody "/path/to/image.jpg"                                      -- (4)
 >
