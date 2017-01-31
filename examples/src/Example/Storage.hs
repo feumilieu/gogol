@@ -32,7 +32,7 @@ import qualified Data.Text as Text
 -- -}
 example :: Text -> FilePath -> IO ()
 example bkt f = do
-    l <- newLogger Debug stdout
+    l <- newLogger Debug stderr
     e <- newEnv <&> (envLogger .~ l) . (envScopes .~ storageReadWriteScope)
     b <- sourceBody f
 
