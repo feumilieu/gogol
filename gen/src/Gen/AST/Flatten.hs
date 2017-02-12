@@ -114,7 +114,7 @@ globalParam l p = case l of
     "oauth_token" -> pure Nothing
     "prettyPrint" -> pure Nothing
     "quotaUser"   -> pure Nothing
-    "fields"      -> pure Nothing
+    -- "fields"      -> pure Nothing
     "userIp"      -> pure Nothing
     "alt"         -> Just <$> overrideParam l (Alt alt) p
     _             -> Just <$> localParam "" l p
