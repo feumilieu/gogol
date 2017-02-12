@@ -51,8 +51,8 @@ parser = Opt
 
     <*> some (option isPath
          ( long "model"
-        <> metavar "DIR"
-        <> help "Directory for a service's botocore models."
+        <> metavar "FILENAME"
+        <> help "File containing service's model."
          ))
 
     <*> option isPath
