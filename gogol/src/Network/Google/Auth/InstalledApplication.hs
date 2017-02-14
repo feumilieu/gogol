@@ -22,7 +22,6 @@ module Network.Google.Auth.InstalledApplication
     ( installedApplication
 
     -- * Forming the URL
-    , redirectURI
     , formURL
     , formURLWith
 
@@ -33,6 +32,7 @@ module Network.Google.Auth.InstalledApplication
 
 import           Control.Monad.Catch            (MonadCatch)
 import           Control.Monad.IO.Class         (MonadIO)
+import qualified Data.Text                      as Text
 import qualified Data.Text.Encoding             as Text
 import           GHC.TypeLits                   (Symbol)
 import           Network.Google.Auth.Scope      (AllowScopes (..),
@@ -63,7 +63,7 @@ import qualified Network.HTTP.Conduit           as Client
 --
 -- > redirectPrompt :: AllowScopes (s :: [Symbol]) => OAuthClient -> proxy s -> IO (OAuthCode s)
 -- > redirectPrompt c p = do
--- >   let url = formURL c p
+-- >   let url = formURL c p ManualCopyPaste Nothing Nothing
 -- >   T.putStrLn $ "Opening URL " `T.append` url
 -- >   _ <- case os of
 -- >     "darwin" -> rawSystem "open"     [unpack url]
@@ -74,29 +74,39 @@ import qualified Network.HTTP.Conduit           as Client
 --
 -- This ensures the scopes passed to 'formURL' and the type of 'OAuthCode' 's'
 -- are correct.
-installedApplication :: OAuthClient -> OAuthCode s -> Credentials s
+installedApplication :: OAuthClient -> OAuthCode s -> RedirectMethod -> Credentials s
 installedApplication = FromClient
 
--- | The redirection URI used in 'formURL': @urn:ietf:wg:oauth:2.0:oob@.
-redirectURI :: Text
-redirectURI = "urn:ietf:wg:oauth:2.0:oob"
-
--- | Given an 'OAuthClient' and a list of scopes to authorize,
--- construct a URL that can be used to obtain the 'OAuthCode'.
+redirectMethodToText :: RedirectMethod -> Text
+redirectMethodToText ManualCopyPaste = "urn:ietf:wg:oauth:2.0:oob"
+redirectMethodToText (LoopbackIP port) = Text.pack $ "http://127.0.0.1:" ++ show port
 --
 -- /See:/ <https://developers.google.com/accounts/docs/OAuth2InstalledApp#formingtheurl Forming the URL>.
-formURL :: AllowScopes (s :: [Symbol]) => OAuthClient -> proxy s -> Text
+formURL :: AllowScopes (s :: [Symbol])
+        => OAuthClient
+        -> proxy s
+        -> RedirectMethod
+        -> Maybe Text
+        -> Maybe Text
+        -> Text
 formURL c = formURLWith c . allowScopes
 
 -- | Form a URL using 'OAuthScope' values.
 --
 -- /See:/ 'formURL'.
-formURLWith :: OAuthClient -> [OAuthScope] -> Text
-formURLWith c ss = accountsURL
+formURLWith :: OAuthClient
+            -> [OAuthScope]
+            -> RedirectMethod
+            -> Maybe Text
+            -> Maybe Text
+            -> Text
+formURLWith c ss rm st lh = accountsURL
     <> "?response_type=code"
     <> "&client_id="    <> toQueryParam (_clientId c)
-    <> "&redirect_uri=" <> redirectURI
+    <> "&redirect_uri=" <> redirectMethodToText rm
     <> "&scope="        <> Text.decodeUtf8 (queryEncodeScopes ss)
+    <> maybe mempty ("&state=" <>) st
+    <> maybe mempty ("&login_hint=" <>) lh
 
 -- | Exchange 'OAuthClient' details and the received 'OAuthCode' for a new
 -- 'OAuthToken'.
@@ -105,17 +115,18 @@ formURLWith c ss = accountsURL
 exchangeCode :: (MonadIO m, MonadCatch m)
              => OAuthClient
              -> (OAuthCode s)
+             -> RedirectMethod
              -> Logger
              -> Manager
              -> m (OAuthToken s)
-exchangeCode c n = refreshRequest $
+exchangeCode c n r = refreshRequest $
     accountsRequest
         { Client.requestBody = textBody $
                "grant_type=authorization_code"
             <> "&client_id="     <> toQueryParam (_clientId     c)
             <> "&client_secret=" <> toQueryParam (_clientSecret c)
             <> "&code="          <> toQueryParam n
-            <> "&redirect_uri="  <> redirectURI
+            <> "&redirect_uri="  <> redirectMethodToText r
         }
 
 -- | Perform a refresh to obtain a valid 'OAuthToken' with a new expiry time.

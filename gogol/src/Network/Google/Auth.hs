@@ -59,6 +59,7 @@ module Network.Google.Auth
     , Secret         (..)
     , ServiceId      (..)
     , ClientId       (..)
+    , RedirectMethod (..)
 
     -- * Re-exported Modules
     , module Network.Google.Auth.Scope
@@ -142,7 +143,7 @@ exchange c l = fmap (Auth c) . action l
     action = case c of
         FromMetadata s    -> metadataToken       s
         FromAccount  a    -> serviceAccountToken a (Proxy :: Proxy s)
-        FromClient   x n  -> exchangeCode        x n
+        FromClient  x n r -> exchangeCode       x n r
         FromUser     u    -> authorizedUserToken u Nothing
 
 -- | Refresh an existing 'OAuthToken' using
@@ -156,7 +157,7 @@ refresh (Auth c t) l = fmap (Auth c) . action l
     action = case c of
         FromMetadata s   -> metadataToken       s
         FromAccount  a   -> serviceAccountToken a (Proxy :: Proxy s)
-        FromClient   x _ -> refreshToken        x t
+        FromClient x _ _ -> refreshToken        x t
         FromUser     u   -> authorizedUserToken u (_tokenRefresh t)
 
 -- | Apply the (by way of possible token refresh) a bearer token to the

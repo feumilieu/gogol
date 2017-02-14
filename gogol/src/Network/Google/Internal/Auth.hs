@@ -36,6 +36,7 @@ import           Data.String                    (IsString)
 import qualified Data.Text                      as Text
 import qualified Data.Text.Encoding             as Text
 import           Data.Time
+import           Data.Word
 import           Data.X509                      (PrivKey (..))
 import           Data.X509.Memory               (readKeyFileFromMemory)
 import           GHC.TypeLits                   (Symbol)
@@ -45,13 +46,16 @@ import           Network.HTTP.Conduit           (HttpException, Manager)
 import qualified Network.HTTP.Conduit           as Client
 import           Network.HTTP.Types             (Status, hContentType)
 
+data RedirectMethod = LoopbackIP Word16 | ManualCopyPaste
+-- TODO: add CustomURI, ProgrammaticExtraction
+
 -- | The supported credential mechanisms.
 data Credentials (s :: [Symbol])
     = FromMetadata !ServiceId
       -- ^ Obtain and refresh access tokens from the underlying GCE host metadata
       -- at @http:\/\/169.254.169.254@.
 
-    | FromClient !OAuthClient !(OAuthCode s)
+    | FromClient !OAuthClient !(OAuthCode s) !RedirectMethod
       -- ^ Obtain and refresh access tokens using the specified client secret
       -- and authorization code obtained from.
       --
